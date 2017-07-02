@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ghost
+  labels:
+    app: ghost
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ghost
+    spec:
+      containers:
+      # ghost:4.7.3-apache
+      - image: bprashanth/ghost-kube:0.3
+        imagePullPolicy: Always
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: GHOST_SOURCE
+          value: /usr/src/ghost
+        - name: GHOST_CONTENT
+          value: /var/lib/ghost
+        name: ghost
+        # ["sh", "-c", "while true; do sleep 36000; done"]
+        command:
+        - "/entrypoint.sh"
+        args:
+        - "npm"
+        - "start"
+        resources:
+          limits:
+            cpu: 200m
+            memory: 1024Mi
+          requests:
+            cpu: 200m
+            memory: 1024Mi
+        ports:
+        - containerPort: 2368
+          name: ghost
+        volumeMounts:
+        - name: ghost-persistent-storage
+          mountPath: /var/lib/ghost
+      volumes:
+      # Created through ghost-storage.yaml
+      - name: ghost-persistent-storage
+        persistentVolumeClaim:
+          claimName: ghost-pv-claim
